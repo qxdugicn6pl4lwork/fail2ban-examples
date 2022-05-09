@@ -1,0 +1,71 @@
+sudo dnf install fail2ban fail2ban-firewalld
+cp /etc/fail2ban/jail.d/00-firewalld.conf /etc/fail2ban/jail.d/00-firewalld.local
+
+
+sudo nano /etc/fail2ban/jail.local
+
+[DEFAULT]
+# Ban hosts for one hour:
+bantime = 3600
+
+# Override backend=auto in /etc/fail2ban/jail.conf
+backend = systemd
+
+[sshd]
+enabled = true
+
+
+fail2ban dovecot
+
+jail.local
+
+[dovecot]
+enabled        = false
+
+[dovecot-secure]
+#enabled        = false
+enabled        = true
+filter        = my_dovecot_secure
+
+my_dovecot_secure.conf:
+
+nano /etc/fail2ban/filter.d/my_dovecot_secure.conf
+
+[Definition]
+# fail2ban-regex /var/log/maillog /etc/fail2ban/filter.d/my_dovecot_secure.conf
+
+
+failregex = auth:.+dovecot:auth.+authentication\s+failure;.+rhost=<HOST>
+             dovecot:.+rip=<HOST>.+wrong version number
+             dovecot:.+tried to use disallowed plaintext auth.+rip=<HOST>
+             dovecot:.+auth failed.+rip=<HOST>
+             dovecot:.+no auth attemps.+rip=<HOST>
+
+
+ignoreregex =
+
+systemctl restart fail2ban
+
+sudo systemctl restart fail2ban
+
+
+sudo fail2ban-client status
+
+Status
+|- Number of jail:      1
+`- Jail list:   sshd
+
+sudo fail2ban-client status sshd
+Status for the jail: sshd
+|- Filter
+|  |- Currently failed: 45
+|  |- Total failed:     281
+|  `- Journal matches:  _SYSTEMD_UNIT=sshd.service + _COMM=sshd
+`- Actions
+   |- Currently banned: 26
+   |- Total banned:     26
+   `- Banned IP list:   101.32.214.87 157.230.82.138 103.110.4.40 87.117.234.75 195.138.74.30 45.55.167.87 118.25.187.178 193.122.61.187 178.128.215.16 212.42.207.253 210.212.237.67 185.118.48.206 1.116.248.55 157.230.7.236 49.233.77.12 139.59.102.170 82.156.8.77 52.151.24.212 159.65.30.66 168.227.78.94 178.62.27.207 45.112.242.154 103.136.42.144 89.163.209.26 142.113.60.178 111.200.54.67
+
+firewall-cmd --list-rich-rules
+
+sudo fail2ban-client unban 192.168.1.10
